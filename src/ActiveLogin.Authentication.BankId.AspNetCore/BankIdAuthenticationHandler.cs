@@ -142,7 +142,8 @@ namespace ActiveLogin.Authentication.BankId.AspNetCore
                 GetSwedishPersonalIdentityNumber(properties),
                 Options.BankIdAllowChangingPersonalIdentityNumber,
                 Options.BankIdAutoLaunch,
-                Options.BankIdAllowBiometric
+                Options.BankIdAllowBiometric,
+                Options.BankIdUseQrCode
             );
             var loginUrl = GetLoginUrl(loginOptions);
             Response.Redirect(loginUrl);
@@ -167,9 +168,14 @@ namespace ActiveLogin.Authentication.BankId.AspNetCore
 
         private string GetLoginUrl(BankIdLoginOptions loginOptions)
         {
-            return $"{Options.LoginPath}" +
-                   $"?returnUrl={UrlEncoder.Encode(Options.CallbackPath)}" +
-                   $"&loginOptions={UrlEncoder.Encode(_loginOptionsProtector.Protect(loginOptions))}";
+	        var pathBase = Context.Request.PathBase;
+	        var loginUrl = pathBase.Add(Options.LoginPath);
+	        var returnUrl = UrlEncoder.Encode(pathBase.Add(Options.CallbackPath));
+	        var protectedOptions = UrlEncoder.Encode(_loginOptionsProtector.Protect(loginOptions));
+
+	        return $"{loginUrl}" +
+                   $"?returnUrl={returnUrl}" +
+                   $"&loginOptions={protectedOptions}";
         }
 
         private void AppendStateCookie(AuthenticationProperties properties)
